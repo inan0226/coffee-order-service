@@ -1,5 +1,7 @@
 package com.example.coffeeorderservice.order;
 
+import com.example.coffeeorderservice.common.BusinessException;
+import com.example.coffeeorderservice.common.ErrorCode;
 import com.example.coffeeorderservice.menu.CoffeeMenu;
 import com.example.coffeeorderservice.menu.MenuService;
 import com.example.coffeeorderservice.point.PointService;
@@ -45,8 +47,9 @@ public class OrderService {
 	 *   <li>데이터 수집 플랫폼 Mock에 주문 이벤트를 즉시 전송합니다.</li>
 	 * </ol>
 	 *
-	 * <p>메뉴가 없거나 포인트가 부족하면 두 번째 단계 이전 또는 도중에 예외가 발생하며,
-	 * 주문 기록과 이벤트는 남지 않습니다.</p>
+	 * <p>메뉴가 없거나 포인트가 부족하면 결제 전 또는 결제 중에 예외가 발생하며,
+	 * 주문 기록과 이벤트는 남지 않습니다. 이벤트 전송이 실패하면 이미 저장한 주문과
+	 * 차감한 포인트를 되돌린 뒤 오류를 반환합니다.</p>
 	 *
 	 * @param userId 주문할 사용자 식별값
 	 * @param menuId 주문할 메뉴 식별값
@@ -56,7 +59,14 @@ public class OrderService {
 		CoffeeMenu menu = menuService.getMenu(menuId);
 		long remainingBalance = pointService.deduct(userId, menu.price());
 		CoffeeOrder order = orderRepository.save(userId, menu.id(), menu.price(), clock.instant());
-		orderEventClient.send(new OrderEvent(userId, menu.id(), menu.price()));
+
+		try {
+			orderEventClient.send(new OrderEvent(userId, menu.id(), menu.price()));
+		} catch (RuntimeException exception) {
+			orderRepository.deleteById(order.id());
+			pointService.refund(userId, menu.price());
+			throw new BusinessException(ErrorCode.ORDER_EVENT_DELIVERY_FAILED);
+		}
 
 		return new OrderResponse(order.id(), userId, menu.id(), menu.price(), remainingBalance);
 	}

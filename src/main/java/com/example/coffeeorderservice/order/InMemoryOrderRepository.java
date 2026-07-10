@@ -35,6 +35,17 @@ public class InMemoryOrderRepository implements OrderRepository {
 	}
 
 	/**
+	 * 주문 ID가 일치하는 기록을 메모리에서 제거합니다.
+	 *
+	 * @param orderId 삭제할 주문 식별값
+	 * @return 주문을 삭제했으면 true
+	 */
+	@Override
+	public boolean deleteById(long orderId) {
+		return orders.removeIf(order -> order.id() == orderId);
+	}
+
+	/**
 	 * 현재 메모리에 있는 전체 주문을 복사해서 반환합니다.
 	 *
 	 * @return 전체 성공 주문 목록

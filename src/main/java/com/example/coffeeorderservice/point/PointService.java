@@ -69,4 +69,27 @@ public class PointService {
 		pointRepository.save(userId, balance);
 		return balance;
 	}
+
+	/**
+	 * 이미 차감한 포인트를 원래 사용자 잔액으로 되돌립니다.
+	 *
+	 * <p>주문 이벤트 전송처럼 결제 이후 단계가 실패했을 때만 호출합니다.
+	 * 정상적인 충전 API 처리에는 사용하지 않습니다.</p>
+	 *
+	 * @param userId 포인트를 되돌릴 사용자 식별값
+	 * @param amount 되돌릴 포인트
+	 * @return 환불 후 포인트 잔액
+	 */
+	public synchronized long refund(long userId, long amount) {
+		long currentBalance = pointRepository.findBalanceByUserId(userId)
+				.orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+		if (Long.MAX_VALUE - currentBalance < amount) {
+			throw new IllegalStateException("포인트 환불 금액이 잔액 범위를 초과했습니다.");
+		}
+
+		long balance = currentBalance + amount;
+		pointRepository.save(userId, balance);
+		return balance;
+	}
 }
