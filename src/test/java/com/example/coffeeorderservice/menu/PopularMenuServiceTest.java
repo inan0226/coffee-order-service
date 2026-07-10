@@ -1,25 +1,34 @@
 package com.example.coffeeorderservice.menu;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import com.example.coffeeorderservice.order.InMemoryOrderRepository;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
 class PopularMenuServiceTest {
 
 	private final Instant now = Instant.parse("2026-07-10T00:00:00Z");
 	private final InMemoryOrderRepository orderRepository = new InMemoryOrderRepository();
+	private final MenuRepository menuRepository = mock(MenuRepository.class);
 	private final PopularMenuService popularMenuService = new PopularMenuService(
-			new InMemoryMenuRepository(),
+			menuRepository,
 			orderRepository,
 			Clock.fixed(now, ZoneOffset.UTC)
 	);
 
 	@Test
 	void 최근_7일_성공_주문을_정확히_집계해_상위_3개를_결정적으로_반환한다() {
+		when(menuRepository.findById(1L)).thenReturn(Optional.of(new CoffeeMenu(1L, "Americano", 4_500L)));
+		when(menuRepository.findById(2L)).thenReturn(Optional.of(new CoffeeMenu(2L, "Cafe Latte", 5_000L)));
+		when(menuRepository.findById(3L)).thenReturn(Optional.of(new CoffeeMenu(3L, "Cappuccino", 5_500L)));
+		when(menuRepository.findById(4L)).thenReturn(Optional.of(new CoffeeMenu(4L, "Cafe Mocha", 6_000L)));
+
 		orderRepository.save(1L, 1L, 4_500L, now);
 		orderRepository.save(2L, 1L, 4_500L, now.minusSeconds(60));
 		orderRepository.save(3L, 1L, 4_500L, now.minusSeconds(120));
