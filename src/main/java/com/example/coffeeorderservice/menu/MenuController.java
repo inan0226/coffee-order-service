@@ -10,13 +10,20 @@ import org.springframework.web.bind.annotation.RestController;
 public class MenuController {
 
 	private final MenuService menuService;
+	private final PopularMenuService popularMenuService;
 
-	public MenuController(MenuService menuService) {
+	public MenuController(MenuService menuService, PopularMenuService popularMenuService) {
 		this.menuService = menuService;
+		this.popularMenuService = popularMenuService;
 	}
 
 	@GetMapping
 	public List<MenuResponse> getMenus() {
 		return menuService.getMenus();
+	}
+
+	@GetMapping("/popular")
+	public List<PopularMenuResponse> getPopularMenus() {
+		return popularMenuService.getPopularMenus();
 	}
 }
