@@ -1,5 +1,7 @@
 package com.example.coffeeorderservice.menu;
 
+import com.example.coffeeorderservice.common.BusinessException;
+import com.example.coffeeorderservice.common.ErrorCode;
 import java.util.List;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +22,6 @@ public class MenuService {
 
 	public CoffeeMenu getMenu(long menuId) {
 		return menuRepository.findById(menuId)
-				.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 메뉴입니다."));
+				.orElseThrow(() -> new BusinessException(ErrorCode.MENU_NOT_FOUND));
 	}
 }
