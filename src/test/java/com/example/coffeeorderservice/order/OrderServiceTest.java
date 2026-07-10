@@ -68,6 +68,37 @@ class OrderServiceTest {
 		assertThat(orderEventClient.events).isEmpty();
 	}
 
+	@Test
+	void 포인트_정보가_없는_사용자는_주문할_수_없다() {
+		assertThatThrownBy(() -> orderService.order(2L, 1L))
+				.isInstanceOfSatisfying(BusinessException.class,
+						exception -> assertThat(exception.errorCode()).isEqualTo(ErrorCode.USER_NOT_FOUND));
+
+		assertThat(orderRepository.findAll()).isEmpty();
+		assertThat(orderEventClient.events).isEmpty();
+	}
+
+	@Test
+	void 주문_이벤트_전송에_실패하면_포인트와_주문_기록을_되돌린다() {
+		OrderService failingOrderService = new OrderService(
+				new MenuService(new InMemoryMenuRepository()),
+				pointService,
+				orderRepository,
+				event -> {
+					throw new IllegalStateException("데이터 수집 플랫폼 연결 실패");
+				},
+				Clock.fixed(Instant.parse("2026-07-10T00:00:00Z"), ZoneOffset.UTC)
+		);
+
+		assertThatThrownBy(() -> failingOrderService.order(1L, 1L))
+				.isInstanceOfSatisfying(BusinessException.class,
+						exception -> assertThat(exception.errorCode())
+								.isEqualTo(ErrorCode.ORDER_EVENT_DELIVERY_FAILED));
+
+		assertThat(pointRepository.findBalanceByUserId(1L)).contains(5_000L);
+		assertThat(orderRepository.findAll()).isEmpty();
+	}
+
 	private static class RecordingOrderEventClient implements OrderEventClient {
 
 		private final List<OrderEvent> events = new ArrayList<>();
