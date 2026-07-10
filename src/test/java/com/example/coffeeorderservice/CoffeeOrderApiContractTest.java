@@ -6,8 +6,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.coffeeorderservice.common.ApiExceptionHandler;
-import com.example.coffeeorderservice.menu.InMemoryMenuRepository;
+import com.example.coffeeorderservice.menu.CoffeeMenu;
 import com.example.coffeeorderservice.menu.MenuController;
+import com.example.coffeeorderservice.menu.MenuRepository;
 import com.example.coffeeorderservice.menu.MenuService;
 import com.example.coffeeorderservice.menu.PopularMenuService;
 import com.example.coffeeorderservice.order.InMemoryOrderRepository;
@@ -20,11 +21,16 @@ import com.example.coffeeorderservice.point.PointService;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class CoffeeOrderApiContractTest {
 
@@ -32,7 +38,16 @@ class CoffeeOrderApiContractTest {
 
 	@BeforeEach
 	void setUp() {
-		InMemoryMenuRepository menuRepository = new InMemoryMenuRepository();
+		MenuRepository menuRepository = mock(MenuRepository.class);
+		CoffeeMenu americano = new CoffeeMenu(1L, "Americano", 4_500L);
+		CoffeeMenu cafeLatte = new CoffeeMenu(2L, "Cafe Latte", 5_000L);
+		CoffeeMenu cappuccino = new CoffeeMenu(3L, "Cappuccino", 5_500L);
+		CoffeeMenu cafeMocha = new CoffeeMenu(4L, "Cafe Mocha", 6_000L);
+		when(menuRepository.findAll()).thenReturn(List.of(americano, cafeLatte, cappuccino, cafeMocha));
+		when(menuRepository.findById(1L)).thenReturn(Optional.of(americano));
+		when(menuRepository.findById(2L)).thenReturn(Optional.of(cafeLatte));
+		when(menuRepository.findById(3L)).thenReturn(Optional.of(cappuccino));
+		when(menuRepository.findById(4L)).thenReturn(Optional.of(cafeMocha));
 		InMemoryOrderRepository orderRepository = new InMemoryOrderRepository();
 		PointService pointService = new PointService(new InMemoryPointRepository());
 		Clock clock = Clock.fixed(Instant.parse("2026-07-10T00:00:00Z"), ZoneOffset.UTC);

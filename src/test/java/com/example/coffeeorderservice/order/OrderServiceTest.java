@@ -2,10 +2,13 @@ package com.example.coffeeorderservice.order;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import com.example.coffeeorderservice.common.BusinessException;
 import com.example.coffeeorderservice.common.ErrorCode;
-import com.example.coffeeorderservice.menu.InMemoryMenuRepository;
+import com.example.coffeeorderservice.menu.CoffeeMenu;
+import com.example.coffeeorderservice.menu.MenuRepository;
 import com.example.coffeeorderservice.menu.MenuService;
 import com.example.coffeeorderservice.point.InMemoryPointRepository;
 import com.example.coffeeorderservice.point.PointService;
@@ -14,6 +17,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -24,7 +28,7 @@ class OrderServiceTest {
 	private final RecordingOrderEventClient orderEventClient = new RecordingOrderEventClient();
 	private final PointService pointService = new PointService(pointRepository);
 	private final OrderService orderService = new OrderService(
-			new MenuService(new InMemoryMenuRepository()),
+			menuService(),
 			pointService,
 			orderRepository,
 			orderEventClient,
@@ -81,7 +85,7 @@ class OrderServiceTest {
 	@Test
 	void 주문_이벤트_전송에_실패하면_포인트와_주문_기록을_되돌린다() {
 		OrderService failingOrderService = new OrderService(
-				new MenuService(new InMemoryMenuRepository()),
+				menuService(),
 				pointService,
 				orderRepository,
 				event -> {
@@ -97,6 +101,13 @@ class OrderServiceTest {
 
 		assertThat(pointRepository.findBalanceByUserId(1L)).contains(5_000L);
 		assertThat(orderRepository.findAll()).isEmpty();
+	}
+
+	private static MenuService menuService() {
+		MenuRepository menuRepository = mock(MenuRepository.class);
+		when(menuRepository.findById(1L)).thenReturn(Optional.of(new CoffeeMenu(1L, "Americano", 4_500L)));
+		when(menuRepository.findById(4L)).thenReturn(Optional.of(new CoffeeMenu(4L, "Cafe Mocha", 6_000L)));
+		return new MenuService(menuRepository);
 	}
 
 	private static class RecordingOrderEventClient implements OrderEventClient {
