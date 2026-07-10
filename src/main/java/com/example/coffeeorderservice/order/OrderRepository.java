@@ -20,6 +20,14 @@ public interface OrderRepository {
 	CoffeeOrder save(long userId, long menuId, long paidAmount, Instant orderedAt);
 
 	/**
+	 * 전송 실패 등으로 주문 처리를 취소해야 할 때 주문 기록을 삭제합니다.
+	 *
+	 * @param orderId 삭제할 주문 식별값
+	 * @return 주문 기록을 실제로 삭제했으면 true
+	 */
+	boolean deleteById(long orderId);
+
+	/**
 	 * 저장된 전체 주문을 반환합니다.
 	 *
 	 * @return 성공한 모든 주문 기록
