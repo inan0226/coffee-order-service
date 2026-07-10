@@ -15,7 +15,7 @@ import com.example.coffeeorderservice.order.InMemoryOrderRepository;
 import com.example.coffeeorderservice.order.OrderController;
 import com.example.coffeeorderservice.order.OrderEventClient;
 import com.example.coffeeorderservice.order.OrderService;
-import com.example.coffeeorderservice.point.InMemoryPointRepository;
+import com.example.coffeeorderservice.point.InMemoryPointBalanceStore;
 import com.example.coffeeorderservice.point.PointController;
 import com.example.coffeeorderservice.point.PointService;
 import java.time.Clock;
@@ -49,7 +49,7 @@ class CoffeeOrderApiContractTest {
 		when(menuRepository.findById(3L)).thenReturn(Optional.of(cappuccino));
 		when(menuRepository.findById(4L)).thenReturn(Optional.of(cafeMocha));
 		InMemoryOrderRepository orderRepository = new InMemoryOrderRepository();
-		PointService pointService = new PointService(new InMemoryPointRepository());
+		PointService pointService = new PointService(new InMemoryPointBalanceStore());
 		Clock clock = Clock.fixed(Instant.parse("2026-07-10T00:00:00Z"), ZoneOffset.UTC);
 		MenuService menuService = new MenuService(menuRepository);
 		PopularMenuService popularMenuService = new PopularMenuService(menuRepository, orderRepository, clock);

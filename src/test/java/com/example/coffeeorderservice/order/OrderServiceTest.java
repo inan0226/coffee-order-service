@@ -10,7 +10,7 @@ import com.example.coffeeorderservice.common.ErrorCode;
 import com.example.coffeeorderservice.menu.CoffeeMenu;
 import com.example.coffeeorderservice.menu.MenuRepository;
 import com.example.coffeeorderservice.menu.MenuService;
-import com.example.coffeeorderservice.point.InMemoryPointRepository;
+import com.example.coffeeorderservice.point.InMemoryPointBalanceStore;
 import com.example.coffeeorderservice.point.PointService;
 import java.time.Clock;
 import java.time.Instant;
@@ -23,10 +23,10 @@ import org.junit.jupiter.api.Test;
 
 class OrderServiceTest {
 
-	private final InMemoryPointRepository pointRepository = new InMemoryPointRepository();
+	private final InMemoryPointBalanceStore pointBalanceStore = new InMemoryPointBalanceStore();
 	private final InMemoryOrderRepository orderRepository = new InMemoryOrderRepository();
 	private final RecordingOrderEventClient orderEventClient = new RecordingOrderEventClient();
-	private final PointService pointService = new PointService(pointRepository);
+	private final PointService pointService = new PointService(pointBalanceStore);
 	private final OrderService orderService = new OrderService(
 			menuService(),
 			pointService,
@@ -56,7 +56,7 @@ class OrderServiceTest {
 				.isInstanceOfSatisfying(BusinessException.class,
 						exception -> assertThat(exception.errorCode()).isEqualTo(ErrorCode.INSUFFICIENT_POINTS));
 
-		assertThat(pointRepository.findBalanceByUserId(1L)).contains(5_000L);
+		assertThat(pointBalanceStore.findBalance(1L)).contains(5_000L);
 		assertThat(orderRepository.findAll()).isEmpty();
 		assertThat(orderEventClient.events).isEmpty();
 	}
@@ -67,7 +67,7 @@ class OrderServiceTest {
 				.isInstanceOfSatisfying(BusinessException.class,
 						exception -> assertThat(exception.errorCode()).isEqualTo(ErrorCode.MENU_NOT_FOUND));
 
-		assertThat(pointRepository.findBalanceByUserId(1L)).contains(5_000L);
+		assertThat(pointBalanceStore.findBalance(1L)).contains(5_000L);
 		assertThat(orderRepository.findAll()).isEmpty();
 		assertThat(orderEventClient.events).isEmpty();
 	}
@@ -99,7 +99,7 @@ class OrderServiceTest {
 						exception -> assertThat(exception.errorCode())
 								.isEqualTo(ErrorCode.ORDER_EVENT_DELIVERY_FAILED));
 
-		assertThat(pointRepository.findBalanceByUserId(1L)).contains(5_000L);
+		assertThat(pointBalanceStore.findBalance(1L)).contains(5_000L);
 		assertThat(orderRepository.findAll()).isEmpty();
 	}
 
