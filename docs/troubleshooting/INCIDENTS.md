@@ -1,42 +1,46 @@
-# Troubleshooting Journal
+# 트러블슈팅 저널
 
-Redacted records of reproducible failures and their validation.
+테스트, 실행, 데이터 확인 중 발견한 문제를 재현 가능한 형태로 남기는 기록입니다. 민감한 값은 기록하지 않으며, 비밀번호·토큰·인증 헤더 등은 자동으로 가립니다.
 
+## 읽는 방법
 
-## 2026-07-13 18:49 +0900 — Diagnostic journal setup verification
+- **상태**: `열림(open)`, `조사 중(investigating)`, `해결(resolved)`, `재현되지 않음(not-reproduced)` 중 하나입니다.
+- **분류**: 테스트, 빌드, 실행 환경, API, 데이터베이스, 동시성, 보안, 성능으로 구분합니다.
+- **실행 명령**과 **종료 코드**는 같은 문제를 다시 확인할 때 사용합니다. 종료 코드 `0`은 명령이 성공했다는 뜻입니다.
+- 상세 로그 발췌는 로컬 `.codex/troubleshooting/logs/`에만 저장하며, Git에는 짧고 안전한 요약만 남깁니다.
 
-- Status: `resolved`
-- Category: `test`
-- Command: `.\\gradlew.bat test --rerun-tasks`
-- Exit code: `0`
-- Symptom: Regression suite required a durable troubleshooting record
-- Root cause: No project-local workflow existed to retain reproducible diagnosis evidence
-- Change: Added redacted diagnostic journal skill and recorder
-- Validation: Full Gradle test suite passed before this record was created
-- Local log excerpt: `-`
+## 2026-07-13 18:49 +0900 - 진단 저널 도입 검증
 
+- 상태: `해결(resolved)`
+- 분류: `테스트(test)`
+- 실행 명령: `.\\gradlew.bat test --rerun-tasks`
+- 종료 코드: `0`
+- 증상: 회귀 테스트 결과를 지속적으로 기록할 방법이 필요했습니다.
+- 원인: 프로젝트 안에 재현 가능한 진단 근거를 남기는 절차가 없었습니다.
+- 변경: 민감정보를 가리는 진단 저널 스킬과 기록 도구를 추가했습니다.
+- 검증: 이 기록을 만들기 전 전체 Gradle 테스트가 통과했습니다.
+- 로컬 로그 발췌: `-`
 
-## 2026-07-13 18:49 +0900 — Full test report capture verification
+## 2026-07-13 18:49 +0900 - 전체 테스트 보고서 저장 검증
 
-- Status: `resolved`
-- Category: `test`
-- Command: `.\\gradlew.bat test --rerun-tasks`
-- Exit code: `0`
-- Symptom: Test evidence must remain available to later troubleshooting runs
-- Root cause: -
-- Change: -
-- Validation: Recorder stored a redacted local report excerpt
-- Local log excerpt: `.codex/troubleshooting/logs/20260713-184948.log`
-
+- 상태: `해결(resolved)`
+- 분류: `테스트(test)`
+- 실행 명령: `.\\gradlew.bat test --rerun-tasks`
+- 종료 코드: `0`
+- 증상: 이후 트러블슈팅 작업에서도 테스트 근거를 확인할 수 있어야 했습니다.
+- 원인: -
+- 변경: -
+- 검증: 기록 도구가 민감정보를 가린 로컬 테스트 보고서 발췌를 저장했습니다.
+- 로컬 로그 발췌: `.codex/troubleshooting/logs/20260713-184948.log`
 
 ## 2026-07-13 18:57 +0900 - Gradle 집중 테스트 필터 정정
 
-- Status: `resolved`
-- Category: `test`
-- Command: `.\\gradlew.bat test --tests com.example.coffeeorderservice.common.ApiExceptionHandlerTest --tests com.example.coffeeorderservice.menu.PopularMenuServiceTest --rerun-tasks`
-- Exit code: `0`
-- Symptom: 축약된 테스트 클래스명으로 실행하면 Gradle이 테스트를 찾지 못함
-- Root cause: Gradle --tests 필터에는 완전한 패키지명을 사용해야 함
-- Change: 완전한 패키지명으로 테스트 선택자를 정정
-- Validation: 정정한 집중 테스트와 전체 Gradle 테스트가 통과함
-- Local log excerpt: `-`
+- 상태: `해결(resolved)`
+- 분류: `테스트(test)`
+- 실행 명령: `.\\gradlew.bat test --tests com.example.coffeeorderservice.common.ApiExceptionHandlerTest --tests com.example.coffeeorderservice.menu.PopularMenuServiceTest --rerun-tasks`
+- 종료 코드: `0`
+- 증상: 축약된 테스트 클래스명으로 실행하면 Gradle이 테스트를 찾지 못했습니다.
+- 원인: Gradle의 `--tests` 필터에는 완전한 패키지명을 사용해야 합니다.
+- 변경: 완전한 패키지명으로 테스트 선택자를 정정했습니다.
+- 검증: 정정한 집중 테스트와 전체 Gradle 테스트가 통과했습니다.
+- 로컬 로그 발췌: `-`
