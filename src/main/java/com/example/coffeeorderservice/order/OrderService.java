@@ -4,6 +4,7 @@ import com.example.coffeeorderservice.menu.CoffeeMenu;
 import com.example.coffeeorderservice.menu.MenuService;
 import com.example.coffeeorderservice.point.PointService;
 import java.time.Clock;
+import java.time.Instant;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -61,10 +62,11 @@ public class OrderService {
 	public OrderResponse order(long userId, long menuId) {
 		CoffeeMenu menu = menuService.getMenu(menuId);
 		long remainingBalance = pointService.deduct(userId, menu.price());
+		Instant orderedAt = clock.instant();
 		CoffeeOrderEntity order = coffeeOrderJpaRepository.save(
-				new CoffeeOrderEntity(userId, menu.id(), menu.price(), clock.instant())
+				new CoffeeOrderEntity(userId, menu.id(), menu.price(), orderedAt)
 		);
-		outboxEventRepository.save(new OutboxEvent(userId, menu.id(), menu.price(), clock.instant()));
+		outboxEventRepository.save(new OutboxEvent(userId, menu.id(), menu.price(), orderedAt));
 		eventPublisher.publishEvent(new OrderCommittedEvent());
 
 		return new OrderResponse(order.id(), userId, menu.id(), menu.price(), remainingBalance);

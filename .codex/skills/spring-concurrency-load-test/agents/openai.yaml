@@ -1,0 +1,4 @@
+interface:
+  display_name: "Spring Concurrency Load Test"
+  short_description: "Exercise concurrent point and outbox flows"
+  default_prompt: "Use $spring-concurrency-load-test to validate this concurrent workflow."

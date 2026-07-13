@@ -35,7 +35,7 @@ erDiagram
 
     COFFEE_MENUS ||--o{ COFFEE_ORDERS : "menu_id (logical)"
     USER_POINTS ||--o{ COFFEE_ORDERS : "user_id (logical)"
-    COFFEE_ORDERS ||--o{ OUTBOX_EVENTS : "order event (transactional)"
+    COFFEE_ORDERS ||--o| OUTBOX_EVENTS : "same transaction (logical 1:1)"
 ```
 
 ## 테이블 설명
@@ -44,7 +44,7 @@ erDiagram
 | --- | --- | --- |
 | `coffee_menus` | 판매 메뉴 마스터 | `price > 0` |
 | `user_points` | 사용자별 포인트 잔액 | `user_id` PK, `balance >= 0` |
-| `coffee_orders` | 성공한 주문 이력 | `paid_amount > 0`, 주문 시각·메뉴/시각 인덱스 |
-| `outbox_events` | 외부 주문 이벤트 발행 상태 | 상태·클레임 시각·ID 인덱스 |
+| `coffee_orders` | 성공한 주문 이력 | `paid_amount > 0`, `ordered_at`, `(menu_id, ordered_at)` 인덱스 |
+| `outbox_events` | 외부 주문 이벤트 발행 상태 | `(status, claimed_at, id)` 인덱스, 클레임 시도 번호 |
 
-현재 마이그레이션은 `coffee_orders`와 `outbox_events`에 물리적 외래 키를 선언하지 않습니다. 다이어그램의 관계는 애플리케이션이 보장하는 논리적 관계입니다.
+현재 마이그레이션은 `coffee_orders`와 `outbox_events`에 물리적 외래 키나 `order_id`를 선언하지 않습니다. 다이어그램의 관계는 애플리케이션이 보장하는 논리적 1:1 관계입니다. 주문이 성공하면 같은 트랜잭션에서 두 레코드를 저장하고 `coffee_orders.ordered_at`과 `outbox_events.created_at`에는 동일한 업무 시각을 기록합니다.
