@@ -1,0 +1,4 @@
+interface:
+  display_name: "Spring ADR Recorder"
+  short_description: "Record durable architecture decisions"
+  default_prompt: "Use $spring-adr-recorder to record this architecture decision."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Spring Observability Review"
+  short_description: "Review safe logs and diagnostic signals"
+  default_prompt: "Use $spring-observability-reviewer to review observability for this change."
