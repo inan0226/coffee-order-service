@@ -7,6 +7,8 @@ import com.example.coffeeorderservice.common.BusinessException;
 import com.example.coffeeorderservice.common.ErrorCode;
 import com.example.coffeeorderservice.point.PointBalanceStore;
 import com.example.coffeeorderservice.point.PointService;
+import java.time.Instant;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -36,6 +38,9 @@ class OrderConsistencyIntegrationTest {
 
 	@Autowired
 	private OutboxEventRepository outboxEventRepository;
+
+	@Autowired
+	private OutboxClaimService outboxClaimService;
 
 	@Autowired
 	private MockDataPlatformOrderEventClient orderEventClient;
@@ -120,9 +125,35 @@ class OrderConsistencyIntegrationTest {
 		assertThat(outboxEventRepository.count()).isEqualTo(1L);
 	}
 
+	@Test
+	void 여러_인스턴스가_같은_아웃박스_이벤트를_중복으로_확보하지_않는다() throws Exception {
+		outboxEventRepository.save(new OutboxEvent(1L, 1L, 4_500L, Instant.now()));
+		CountDownLatch ready = new CountDownLatch(2);
+		CountDownLatch start = new CountDownLatch(1);
+
+		Future<List<OutboxMessage>> firstClaim = executorService.submit(() -> claimAfterStart(ready, start));
+		Future<List<OutboxMessage>> secondClaim = executorService.submit(() -> claimAfterStart(ready, start));
+
+		ready.await();
+		start.countDown();
+
+		int claimedCount = firstClaim.get().size() + secondClaim.get().size();
+
+		assertThat(claimedCount).isEqualTo(1);
+		assertThat(outboxEventRepository.findAll())
+				.extracting(OutboxEvent::status)
+				.containsExactly(OutboxStatus.PROCESSING);
+	}
+
 	private OrderResponse orderAfterStart(CountDownLatch ready, CountDownLatch start) throws Exception {
 		ready.countDown();
 		start.await();
 		return orderService.order(1L, 1L);
+	}
+
+	private List<OutboxMessage> claimAfterStart(CountDownLatch ready, CountDownLatch start) throws Exception {
+		ready.countDown();
+		start.await();
+		return outboxClaimService.claimPendingEvents();
 	}
 }
