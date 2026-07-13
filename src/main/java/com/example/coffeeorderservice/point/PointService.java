@@ -3,6 +3,7 @@ package com.example.coffeeorderservice.point;
 import com.example.coffeeorderservice.common.BusinessException;
 import com.example.coffeeorderservice.common.ErrorCode;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,9 +17,14 @@ import org.springframework.transaction.annotation.Transactional;
 public class PointService {
 
 	private final PointBalanceStore pointBalanceStore;
+	private final PointChargeTransactionService pointChargeTransactionService;
 
-	public PointService(PointBalanceStore pointBalanceStore) {
+	public PointService(
+			PointBalanceStore pointBalanceStore,
+			PointChargeTransactionService pointChargeTransactionService
+	) {
 		this.pointBalanceStore = pointBalanceStore;
+		this.pointChargeTransactionService = pointChargeTransactionService;
 	}
 
 	/**
@@ -31,7 +37,6 @@ public class PointService {
 	 * @param amount 충전 금액이자 추가할 포인트
 	 * @return 충전 후의 사용자 ID와 포인트 잔액
 	 */
-	@Transactional
 	public PointBalanceResponse charge(long userId, long amount) {
 		if (userId <= 0) {
 			throw new BusinessException(ErrorCode.INVALID_REQUEST);
@@ -41,18 +46,18 @@ public class PointService {
 		}
 
 		try {
-			if (pointBalanceStore.increaseExisting(userId, amount) == 0) {
-				try {
-					pointBalanceStore.create(userId, amount);
-				} catch (DataIntegrityViolationException duplicateUserPoint) {
-					pointBalanceStore.increaseExisting(userId, amount);
-				}
-			}
+			return new PointBalanceResponse(
+					userId,
+					pointChargeTransactionService.chargeExistingOrCreate(userId, amount)
+			);
+		} catch (DuplicateKeyException duplicateUserPoint) {
+			return new PointBalanceResponse(
+					userId,
+					pointChargeTransactionService.chargeExisting(userId, amount)
+			);
 		} catch (DataIntegrityViolationException overflow) {
 			throw new BusinessException(ErrorCode.POINT_BALANCE_OVERFLOW);
 		}
-
-		return new PointBalanceResponse(userId, currentBalance(userId));
 	}
 
 	/**
