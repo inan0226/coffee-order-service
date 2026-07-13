@@ -1,0 +1,4 @@
+interface:
+  display_name: "Spring Security Performance Review"
+  short_description: "Review security, reliability, and query efficiency"
+  default_prompt: "Use $spring-security-performance-reviewer to review this change for security and performance."
