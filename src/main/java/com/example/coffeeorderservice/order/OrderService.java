@@ -1,40 +1,43 @@
 package com.example.coffeeorderservice.order;
 
-import com.example.coffeeorderservice.common.BusinessException;
-import com.example.coffeeorderservice.common.ErrorCode;
 import com.example.coffeeorderservice.menu.CoffeeMenu;
 import com.example.coffeeorderservice.menu.MenuService;
 import com.example.coffeeorderservice.point.PointService;
 import java.time.Clock;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 메뉴 주문, 포인트 결제, 주문 저장, 이벤트 전송을 순서대로 처리하는 Service입니다.
  *
- * <p>주문 처리 전체를 동기화해 동시에 여러 주문이 들어와도 한 주문의 결제 단계가
- * 중간에 다른 주문과 섞이지 않게 합니다.</p>
+ * <p>포인트 차감, 주문 저장, 아웃박스 저장을 하나의 DB 트랜잭션으로 처리합니다.
+ * 각 서버 인스턴스가 같은 DB를 사용하므로 JVM 잠금 없이도 데이터 일관성을 지킬 수 있습니다.</p>
  */
 @Service
 public class OrderService {
 
 	private final MenuService menuService;
 	private final PointService pointService;
-	private final OrderRepository orderRepository;
-	private final OrderEventClient orderEventClient;
+	private final CoffeeOrderJpaRepository coffeeOrderJpaRepository;
+	private final OutboxEventRepository outboxEventRepository;
 	private final Clock clock;
+	private final ApplicationEventPublisher eventPublisher;
 
 	public OrderService(
 			MenuService menuService,
 			PointService pointService,
-			OrderRepository orderRepository,
-			OrderEventClient orderEventClient,
-			Clock clock
+			CoffeeOrderJpaRepository coffeeOrderJpaRepository,
+			OutboxEventRepository outboxEventRepository,
+			Clock clock,
+			ApplicationEventPublisher eventPublisher
 	) {
 		this.menuService = menuService;
 		this.pointService = pointService;
-		this.orderRepository = orderRepository;
-		this.orderEventClient = orderEventClient;
+		this.coffeeOrderJpaRepository = coffeeOrderJpaRepository;
+		this.outboxEventRepository = outboxEventRepository;
 		this.clock = clock;
+		this.eventPublisher = eventPublisher;
 	}
 
 	/**
@@ -44,29 +47,25 @@ public class OrderService {
 	 *   <li>메뉴가 존재하는지 확인합니다.</li>
 	 *   <li>메뉴 가격만큼 포인트를 차감합니다.</li>
 	 *   <li>성공 주문을 저장합니다.</li>
-	 *   <li>데이터 수집 플랫폼 Mock에 주문 이벤트를 즉시 전송합니다.</li>
+	 *   <li>주문 이벤트를 아웃박스에 함께 저장합니다.</li>
 	 * </ol>
 	 *
-	 * <p>메뉴가 없거나 포인트가 부족하면 결제 전 또는 결제 중에 예외가 발생하며,
-	 * 주문 기록과 이벤트는 남지 않습니다. 이벤트 전송이 실패하면 이미 저장한 주문과
-	 * 차감한 포인트를 되돌린 뒤 오류를 반환합니다.</p>
+	 * <p>메뉴가 없거나 포인트가 부족하면 트랜잭션 전체가 롤백되어 주문과 이벤트가 남지 않습니다.
+	 * 커밋 뒤 외부 전송에 실패해도 아웃박스 이벤트가 남아 다른 인스턴스가 재시도합니다.</p>
 	 *
 	 * @param userId 주문할 사용자 식별값
 	 * @param menuId 주문할 메뉴 식별값
 	 * @return 생성된 주문 정보와 결제 후 잔액
 	 */
-	public synchronized OrderResponse order(long userId, long menuId) {
+	@Transactional
+	public OrderResponse order(long userId, long menuId) {
 		CoffeeMenu menu = menuService.getMenu(menuId);
 		long remainingBalance = pointService.deduct(userId, menu.price());
-		CoffeeOrder order = orderRepository.save(userId, menu.id(), menu.price(), clock.instant());
-
-		try {
-			orderEventClient.send(new OrderEvent(userId, menu.id(), menu.price()));
-		} catch (RuntimeException exception) {
-			orderRepository.deleteById(order.id());
-			pointService.refund(userId, menu.price());
-			throw new BusinessException(ErrorCode.ORDER_EVENT_DELIVERY_FAILED);
-		}
+		CoffeeOrderEntity order = coffeeOrderJpaRepository.save(
+				new CoffeeOrderEntity(userId, menu.id(), menu.price(), clock.instant())
+		);
+		outboxEventRepository.save(new OutboxEvent(userId, menu.id(), menu.price(), clock.instant()));
+		eventPublisher.publishEvent(new OrderCommittedEvent());
 
 		return new OrderResponse(order.id(), userId, menu.id(), menu.price(), remainingBalance);
 	}
