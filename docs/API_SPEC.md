@@ -20,6 +20,7 @@
 | `INSUFFICIENT_POINTS` | 400 | 주문에 필요한 포인트가 부족함 |
 | `USER_NOT_FOUND` | 404 | 포인트 정보가 없는 사용자임 |
 | `MENU_NOT_FOUND` | 404 | 존재하지 않는 메뉴임 |
+| `INTERNAL_SERVER_ERROR` | 500 | 내부 예외 발생 시 상세 정보를 노출하지 않는 공통 오류 |
 
 ## 메뉴 목록 조회
 
