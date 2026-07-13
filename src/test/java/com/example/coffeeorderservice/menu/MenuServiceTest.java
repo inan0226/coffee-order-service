@@ -14,7 +14,7 @@ class MenuServiceTest {
 
 	@Test
 	void 메뉴_목록은_메뉴_ID_이름_가격을_반환한다() {
-		when(menuRepository.findAll()).thenReturn(List.of(
+		when(menuRepository.findAllByOrderByIdAsc()).thenReturn(List.of(
 				new CoffeeMenu(1L, "Americano", 4_500L),
 				new CoffeeMenu(2L, "Cafe Latte", 5_000L),
 				new CoffeeMenu(3L, "Cappuccino", 5_500L),
