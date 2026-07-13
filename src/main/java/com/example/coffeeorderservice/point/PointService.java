@@ -2,21 +2,29 @@ package com.example.coffeeorderservice.point;
 
 import com.example.coffeeorderservice.common.BusinessException;
 import com.example.coffeeorderservice.common.ErrorCode;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 포인트 충전과 차감 규칙을 담당하는 Service입니다.
  *
- * <p>잔액을 바꾸는 메서드는 동시에 실행되지 않도록 동기화하여,
- * 같은 사용자의 포인트가 잘못 계산될 가능성을 줄입니다.</p>
+ * <p>공유 DB의 원자 쿼리를 사용하므로 서버 인스턴스가 여러 개여도
+ * 포인트 증가와 차감이 서로 덮어써지지 않습니다.</p>
  */
 @Service
 public class PointService {
 
-	private final PointRepository pointRepository;
+	private final PointBalanceStore pointBalanceStore;
+	private final PointChargeTransactionService pointChargeTransactionService;
 
-	public PointService(PointRepository pointRepository) {
-		this.pointRepository = pointRepository;
+	public PointService(
+			PointBalanceStore pointBalanceStore,
+			PointChargeTransactionService pointChargeTransactionService
+	) {
+		this.pointBalanceStore = pointBalanceStore;
+		this.pointChargeTransactionService = pointChargeTransactionService;
 	}
 
 	/**
@@ -29,7 +37,7 @@ public class PointService {
 	 * @param amount 충전 금액이자 추가할 포인트
 	 * @return 충전 후의 사용자 ID와 포인트 잔액
 	 */
-	public synchronized PointBalanceResponse charge(long userId, long amount) {
+	public PointBalanceResponse charge(long userId, long amount) {
 		if (userId <= 0) {
 			throw new BusinessException(ErrorCode.INVALID_REQUEST);
 		}
@@ -37,14 +45,19 @@ public class PointService {
 			throw new BusinessException(ErrorCode.INVALID_CHARGE_AMOUNT);
 		}
 
-		long currentBalance = pointRepository.findBalanceByUserId(userId).orElse(0L);
-		if (Long.MAX_VALUE - currentBalance < amount) {
-			throw new BusinessException(ErrorCode.INVALID_CHARGE_AMOUNT);
+		try {
+			return new PointBalanceResponse(
+					userId,
+					pointChargeTransactionService.chargeExistingOrCreate(userId, amount)
+			);
+		} catch (DuplicateKeyException duplicateUserPoint) {
+			return new PointBalanceResponse(
+					userId,
+					pointChargeTransactionService.chargeExisting(userId, amount)
+			);
+		} catch (DataIntegrityViolationException overflow) {
+			throw new BusinessException(ErrorCode.POINT_BALANCE_OVERFLOW);
 		}
-
-		long balance = currentBalance + amount;
-		pointRepository.save(userId, balance);
-		return new PointBalanceResponse(userId, balance);
 	}
 
 	/**
@@ -57,39 +70,24 @@ public class PointService {
 	 * @param amount 차감할 포인트
 	 * @return 차감 후 남은 포인트 잔액
 	 */
-	public synchronized long deduct(long userId, long amount) {
-		long currentBalance = pointRepository.findBalanceByUserId(userId)
-				.orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+	@Transactional
+	public long deduct(long userId, long amount) {
+		if (amount <= 0) {
+			throw new BusinessException(ErrorCode.INVALID_REQUEST);
+		}
 
-		if (currentBalance < amount) {
+		if (pointBalanceStore.deductIfEnough(userId, amount) == 0) {
+			if (!pointBalanceStore.exists(userId)) {
+				throw new BusinessException(ErrorCode.USER_NOT_FOUND);
+			}
 			throw new BusinessException(ErrorCode.INSUFFICIENT_POINTS);
 		}
 
-		long balance = currentBalance - amount;
-		pointRepository.save(userId, balance);
-		return balance;
+		return currentBalance(userId);
 	}
 
-	/**
-	 * 이미 차감한 포인트를 원래 사용자 잔액으로 되돌립니다.
-	 *
-	 * <p>주문 이벤트 전송처럼 결제 이후 단계가 실패했을 때만 호출합니다.
-	 * 정상적인 충전 API 처리에는 사용하지 않습니다.</p>
-	 *
-	 * @param userId 포인트를 되돌릴 사용자 식별값
-	 * @param amount 되돌릴 포인트
-	 * @return 환불 후 포인트 잔액
-	 */
-	public synchronized long refund(long userId, long amount) {
-		long currentBalance = pointRepository.findBalanceByUserId(userId)
+	private long currentBalance(long userId) {
+		return pointBalanceStore.findBalance(userId)
 				.orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-
-		if (Long.MAX_VALUE - currentBalance < amount) {
-			throw new IllegalStateException("포인트 환불 금액이 잔액 범위를 초과했습니다.");
-		}
-
-		long balance = currentBalance + amount;
-		pointRepository.save(userId, balance);
-		return balance;
 	}
 }
