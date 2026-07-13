@@ -1,14 +1,11 @@
 package com.example.coffeeorderservice.menu;
 
-import com.example.coffeeorderservice.order.CoffeeOrder;
-import com.example.coffeeorderservice.order.OrderRepository;
+import com.example.coffeeorderservice.order.CoffeeOrderJpaRepository;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 /**
@@ -21,12 +18,16 @@ import org.springframework.stereotype.Service;
 public class PopularMenuService {
 
 	private final MenuRepository menuRepository;
-	private final OrderRepository orderRepository;
+	private final CoffeeOrderJpaRepository coffeeOrderJpaRepository;
 	private final Clock clock;
 
-	public PopularMenuService(MenuRepository menuRepository, OrderRepository orderRepository, Clock clock) {
+	public PopularMenuService(
+			MenuRepository menuRepository,
+			CoffeeOrderJpaRepository coffeeOrderJpaRepository,
+			Clock clock
+	) {
 		this.menuRepository = menuRepository;
-		this.orderRepository = orderRepository;
+		this.coffeeOrderJpaRepository = coffeeOrderJpaRepository;
 		this.clock = clock;
 	}
 
@@ -39,15 +40,8 @@ public class PopularMenuService {
 		Instant now = clock.instant();
 		Instant sevenDaysAgo = now.minus(7, ChronoUnit.DAYS);
 
-		Map<Long, Long> orderCountByMenuId = orderRepository.findByOrderedAtBetween(sevenDaysAgo, now).stream()
-				.collect(Collectors.groupingBy(CoffeeOrder::menuId, Collectors.counting()));
-
-		return orderCountByMenuId.entrySet().stream()
-				.sorted(Comparator.<Map.Entry<Long, Long>>comparingLong(Map.Entry::getValue)
-						.reversed()
-						.thenComparingLong(Map.Entry::getKey))
-				.limit(3)
-				.map(entry -> toResponse(entry.getKey(), entry.getValue()))
+		return coffeeOrderJpaRepository.findPopularMenuCounts(sevenDaysAgo, now, PageRequest.of(0, 3)).stream()
+				.map(menuOrderCount -> toResponse(menuOrderCount.menuId(), menuOrderCount.orderCount()))
 				.toList();
 	}
 
