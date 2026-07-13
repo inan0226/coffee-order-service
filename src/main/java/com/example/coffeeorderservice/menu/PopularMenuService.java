@@ -64,11 +64,15 @@ public class PopularMenuService {
 	}
 
 	/**
-	 * 집계 결과의 메뉴 ID를 실제 메뉴 정보와 결합합니다.
+	 * 일괄 조회한 메뉴에서 집계 결과에 해당하는 메뉴를 찾습니다.
 	 *
-	 * @param menuId 메뉴 식별값
-	 * @param orderCount 집계된 주문 횟수
-	 * @return 인기 메뉴 API 응답
+	 * <p>주문 집계와 메뉴 조회 사이에 메뉴가 삭제된 경우에는 일관성이 깨진 상태이므로,
+	 * 누락을 조용히 무시하지 않고 예외로 처리합니다.</p>
+	 *
+	 * @param menusById 메뉴 ID를 키로 하는 일괄 조회 결과
+	 * @param menuId 주문 집계에 포함된 메뉴 식별값
+	 * @return 주문 집계와 연결할 메뉴 정보
+	 * @throws IllegalStateException 집계 대상 메뉴를 찾지 못한 경우
 	 */
 	private CoffeeMenu findMenu(Map<Long, CoffeeMenu> menusById, long menuId) {
 		CoffeeMenu menu = menusById.get(menuId);
