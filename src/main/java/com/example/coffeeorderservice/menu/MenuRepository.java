@@ -1,5 +1,6 @@
 package com.example.coffeeorderservice.menu;
 
+import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 /**
@@ -8,4 +9,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
  * <p>Spring Data JPA가 공유 데이터베이스에서 메뉴를 조회합니다.</p>
  */
 public interface MenuRepository extends JpaRepository<CoffeeMenu, Long> {
+
+	List<CoffeeMenu> findAllByOrderByIdAsc();
 }
