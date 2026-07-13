@@ -39,4 +39,11 @@ public class MockDataPlatformOrderEventClient implements OrderEventClient {
 	public List<OrderEvent> getSentEvents() {
 		return List.copyOf(sentEvents);
 	}
+
+	/**
+	 * 테스트 시작 전 Mock 전송 기록을 비웁니다.
+	 */
+	public void clearSentEvents() {
+		sentEvents.clear();
+	}
 }
