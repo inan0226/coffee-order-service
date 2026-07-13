@@ -75,6 +75,15 @@ public class OutboxEvent {
 		return attemptCount;
 	}
 
+	/**
+	 * 주문 트랜잭션에서 아웃박스 이벤트를 만든 업무 시각을 반환합니다.
+	 *
+	 * @return 주문 레코드와 동일하게 기록한 생성 시각
+	 */
+	public Instant createdAt() {
+		return createdAt;
+	}
+
 	public OrderEvent toOrderEvent() {
 		return new OrderEvent(userId, menuId, paidAmount);
 	}
