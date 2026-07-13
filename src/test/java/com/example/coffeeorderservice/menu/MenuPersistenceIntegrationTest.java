@@ -15,11 +15,11 @@ class MenuPersistenceIntegrationTest {
 
 	@Test
 	void Flyway로_초기화한_메뉴를_공유_데이터베이스에서_조회한다() {
-		List<CoffeeMenu> menus = menuRepository.findAll();
+		List<CoffeeMenu> menus = menuRepository.findAllByOrderByIdAsc();
 
 		assertThat(menus)
 				.extracting(CoffeeMenu::id, CoffeeMenu::name, CoffeeMenu::price)
-				.containsExactlyInAnyOrder(
+				.containsExactly(
 						org.assertj.core.groups.Tuple.tuple(1L, "Americano", 4_500L),
 						org.assertj.core.groups.Tuple.tuple(2L, "Cafe Latte", 5_000L),
 						org.assertj.core.groups.Tuple.tuple(3L, "Cappuccino", 5_500L),
