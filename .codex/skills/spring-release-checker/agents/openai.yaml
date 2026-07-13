@@ -1,0 +1,4 @@
+interface:
+  display_name: "Spring Release Checker"
+  short_description: "Run a safe pre-release project check"
+  default_prompt: "Use $spring-release-checker to perform a pre-release check for this project."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Spring API Contract Regression"
+  short_description: "Keep API docs, DTOs, and tests aligned"
+  default_prompt: "Use $spring-api-contract-regression to review this API change for contract regressions."
