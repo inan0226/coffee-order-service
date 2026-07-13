@@ -145,6 +145,25 @@ class OrderConsistencyIntegrationTest {
 				.containsExactly(OutboxStatus.PROCESSING);
 	}
 
+	@Test
+	void 만료된_이전_클레임은_새_처리자의_전송_완료_상태를_되돌릴_수_없다() {
+		OutboxEvent event = outboxEventRepository.save(new OutboxEvent(1L, 1L, 4_500L, Instant.now()));
+		OutboxMessage expiredMessage = outboxClaimService.claimPendingEvents().getFirst();
+
+		jdbcTemplate.update(
+				"update outbox_events set claimed_at = ? where id = ?",
+				java.sql.Timestamp.from(Instant.now().minusSeconds(61)),
+				event.id()
+		);
+		OutboxMessage recoveredMessage = outboxClaimService.claimPendingEvents().getFirst();
+
+		assertThat(outboxClaimService.markSent(recoveredMessage)).isTrue();
+		assertThat(outboxClaimService.releaseForRetry(expiredMessage)).isFalse();
+		assertThat(outboxEventRepository.findAll())
+				.extracting(OutboxEvent::status)
+				.containsExactly(OutboxStatus.SENT);
+	}
+
 	private OrderResponse orderAfterStart(CountDownLatch ready, CountDownLatch start) throws Exception {
 		ready.countDown();
 		start.await();

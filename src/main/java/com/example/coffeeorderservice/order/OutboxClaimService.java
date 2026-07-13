@@ -43,31 +43,40 @@ public class OutboxClaimService {
 
 		events.forEach(event -> event.claim(now));
 		return events.stream()
-				.map(event -> new OutboxMessage(event.id(), event.toOrderEvent()))
+				.map(event -> new OutboxMessage(event.id(), event.attemptCount(), event.toOrderEvent()))
 				.toList();
 	}
 
 	/**
 	 * 외부 플랫폼 전송 성공을 기록합니다.
 	 *
-	 * @param outboxEventId 전송에 성공한 이벤트 ID
+	 * @param message 전송에 성공한 이벤트의 클레임 정보
+	 * @return 현재 클레임이 여전히 유효해 전송 완료 상태로 바꿨으면 {@code true}
 	 */
 	@Transactional(propagation = Propagation.REQUIRES_NEW)
-	public void markSent(long outboxEventId) {
-		OutboxEvent event = outboxEventRepository.findById(outboxEventId)
-				.orElseThrow(() -> new IllegalStateException("아웃박스 이벤트를 찾을 수 없습니다."));
-		event.markSent(clock.instant());
+	public boolean markSent(OutboxMessage message) {
+		return outboxEventRepository.markSentIfClaimed(
+				message.outboxEventId(),
+				message.claimAttempt(),
+				OutboxStatus.PROCESSING,
+				OutboxStatus.SENT,
+				clock.instant()
+		) == 1;
 	}
 
 	/**
 	 * 외부 플랫폼 전송 실패 이벤트를 다시 전송 가능한 상태로 되돌립니다.
 	 *
-	 * @param outboxEventId 재시도할 이벤트 ID
+	 * @param message 재시도할 이벤트의 클레임 정보
+	 * @return 현재 클레임이 여전히 유효해 재시도 상태로 바꿨으면 {@code true}
 	 */
 	@Transactional(propagation = Propagation.REQUIRES_NEW)
-	public void releaseForRetry(long outboxEventId) {
-		OutboxEvent event = outboxEventRepository.findById(outboxEventId)
-				.orElseThrow(() -> new IllegalStateException("아웃박스 이벤트를 찾을 수 없습니다."));
-		event.releaseForRetry();
+	public boolean releaseForRetry(OutboxMessage message) {
+		return outboxEventRepository.releaseForRetryIfClaimed(
+				message.outboxEventId(),
+				message.claimAttempt(),
+				OutboxStatus.PROCESSING,
+				OutboxStatus.PENDING
+		) == 1;
 	}
 }

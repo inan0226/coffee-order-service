@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import jakarta.persistence.LockModeType;
@@ -35,5 +36,36 @@ public interface OutboxEventRepository extends JpaRepository<OutboxEvent, Long> 
 			@Param("processing") OutboxStatus processing,
 			@Param("expiredBefore") Instant expiredBefore,
 			Pageable pageable
+	);
+
+	@Modifying
+	@Query("""
+			update OutboxEvent event
+			set event.status = :sent, event.claimedAt = null, event.publishedAt = :publishedAt
+			where event.id = :outboxEventId
+			  and event.status = :processing
+			  and event.attemptCount = :claimAttempt
+			""")
+	int markSentIfClaimed(
+			@Param("outboxEventId") long outboxEventId,
+			@Param("claimAttempt") int claimAttempt,
+			@Param("processing") OutboxStatus processing,
+			@Param("sent") OutboxStatus sent,
+			@Param("publishedAt") Instant publishedAt
+	);
+
+	@Modifying
+	@Query("""
+			update OutboxEvent event
+			set event.status = :pending, event.claimedAt = null
+			where event.id = :outboxEventId
+			  and event.status = :processing
+			  and event.attemptCount = :claimAttempt
+			""")
+	int releaseForRetryIfClaimed(
+			@Param("outboxEventId") long outboxEventId,
+			@Param("claimAttempt") int claimAttempt,
+			@Param("processing") OutboxStatus processing,
+			@Param("pending") OutboxStatus pending
 	);
 }

@@ -67,19 +67,12 @@ public class OutboxEvent {
 		this.attemptCount++;
 	}
 
-	public void markSent(Instant publishedAt) {
-		this.status = OutboxStatus.SENT;
-		this.claimedAt = null;
-		this.publishedAt = publishedAt;
-	}
-
-	public void releaseForRetry() {
-		this.status = OutboxStatus.PENDING;
-		this.claimedAt = null;
-	}
-
 	public long id() {
 		return id;
+	}
+
+	public int attemptCount() {
+		return attemptCount;
 	}
 
 	public OrderEvent toOrderEvent() {
