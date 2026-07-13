@@ -95,6 +95,20 @@ class OrderConsistencyIntegrationTest {
 	}
 
 	@Test
+	void 존재하지_않는_메뉴를_주문하면_포인트와_주문_기록이_변경되지_않는다() {
+		pointService.charge(1L, 10_000L);
+
+		assertThatThrownBy(() -> orderService.order(1L, 999L))
+				.isInstanceOfSatisfying(BusinessException.class,
+						exception -> assertThat(exception.errorCode()).isEqualTo(ErrorCode.MENU_NOT_FOUND));
+
+		assertThat(pointBalanceStore.findBalance(1L)).contains(10_000L);
+		assertThat(coffeeOrderJpaRepository.count()).isZero();
+		assertThat(outboxEventRepository.count()).isZero();
+		assertThat(orderEventClient.getSentEvents()).isEmpty();
+	}
+
+	@Test
 	void 동시에_같은_포인트로_주문하면_정확히_한_건만_성공한다() throws Exception {
 		pointService.charge(1L, 4_500L);
 		CountDownLatch ready = new CountDownLatch(2);
