@@ -28,10 +28,16 @@ public class OutboxDispatcher {
 		for (OutboxMessage message : outboxClaimService.claimPendingEvents()) {
 			try {
 				orderEventClient.send(message.orderEvent());
-				outboxClaimService.markSent(message.outboxEventId());
+				if (!outboxClaimService.markSent(message)) {
+					log.info("다른 인스턴스가 아웃박스 이벤트 상태를 갱신했습니다. outboxEventId={}",
+							message.outboxEventId());
+				}
 			} catch (RuntimeException exception) {
 				log.warn("주문 이벤트 전송에 실패했습니다. outboxEventId={}", message.outboxEventId(), exception);
-				outboxClaimService.releaseForRetry(message.outboxEventId());
+				if (!outboxClaimService.releaseForRetry(message)) {
+					log.info("다른 인스턴스가 아웃박스 이벤트 상태를 갱신했습니다. outboxEventId={}",
+							message.outboxEventId());
+				}
 			}
 		}
 	}
