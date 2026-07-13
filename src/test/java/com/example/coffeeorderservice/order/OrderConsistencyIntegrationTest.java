@@ -73,6 +73,9 @@ class OrderConsistencyIntegrationTest {
 		assertThat(response.remainingBalance()).isEqualTo(5_500L);
 		assertThat(pointBalanceStore.findBalance(1L)).contains(5_500L);
 		assertThat(coffeeOrderJpaRepository.count()).isEqualTo(1L);
+		CoffeeOrderEntity savedOrder = coffeeOrderJpaRepository.findAll().getFirst();
+		OutboxEvent savedOutboxEvent = outboxEventRepository.findAll().getFirst();
+		assertThat(savedOutboxEvent.createdAt()).isEqualTo(savedOrder.orderedAt());
 		assertThat(outboxEventRepository.findAll())
 				.extracting(OutboxEvent::status)
 				.containsExactly(OutboxStatus.SENT);
