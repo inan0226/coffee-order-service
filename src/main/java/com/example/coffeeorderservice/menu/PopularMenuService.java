@@ -5,6 +5,9 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
@@ -39,9 +42,24 @@ public class PopularMenuService {
 	public List<PopularMenuResponse> getPopularMenus() {
 		Instant now = clock.instant();
 		Instant sevenDaysAgo = now.minus(7, ChronoUnit.DAYS);
+		List<MenuOrderCount> menuOrderCounts = coffeeOrderJpaRepository.findPopularMenuCounts(
+				sevenDaysAgo,
+				now,
+				PageRequest.of(0, 3)
+		);
+		if (menuOrderCounts.isEmpty()) {
+			return List.of();
+		}
 
-		return coffeeOrderJpaRepository.findPopularMenuCounts(sevenDaysAgo, now, PageRequest.of(0, 3)).stream()
-				.map(menuOrderCount -> toResponse(menuOrderCount.menuId(), menuOrderCount.orderCount()))
+		Map<Long, CoffeeMenu> menusById = menuRepository.findAllById(
+				menuOrderCounts.stream().map(MenuOrderCount::menuId).toList()
+		).stream().collect(Collectors.toMap(CoffeeMenu::id, Function.identity()));
+
+		return menuOrderCounts.stream()
+				.map(menuOrderCount -> PopularMenuResponse.of(
+						findMenu(menusById, menuOrderCount.menuId()),
+						menuOrderCount.orderCount()
+				))
 				.toList();
 	}
 
@@ -52,9 +70,11 @@ public class PopularMenuService {
 	 * @param orderCount 집계된 주문 횟수
 	 * @return 인기 메뉴 API 응답
 	 */
-	private PopularMenuResponse toResponse(long menuId, long orderCount) {
-		CoffeeMenu menu = menuRepository.findById(menuId)
-				.orElseThrow(() -> new IllegalStateException("주문 메뉴를 찾을 수 없습니다."));
-		return PopularMenuResponse.of(menu, orderCount);
+	private CoffeeMenu findMenu(Map<Long, CoffeeMenu> menusById, long menuId) {
+		CoffeeMenu menu = menusById.get(menuId);
+		if (menu == null) {
+			throw new IllegalStateException("주문 메뉴를 찾을 수 없습니다.");
+		}
+		return menu;
 	}
 }
