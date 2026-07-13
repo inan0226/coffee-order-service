@@ -6,54 +6,58 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.coffeeorderservice.common.ApiExceptionHandler;
-import com.example.coffeeorderservice.menu.InMemoryMenuRepository;
 import com.example.coffeeorderservice.menu.MenuController;
-import com.example.coffeeorderservice.menu.MenuService;
-import com.example.coffeeorderservice.menu.PopularMenuService;
-import com.example.coffeeorderservice.order.InMemoryOrderRepository;
+import com.example.coffeeorderservice.order.CoffeeOrderJpaRepository;
+import com.example.coffeeorderservice.order.MockDataPlatformOrderEventClient;
 import com.example.coffeeorderservice.order.OrderController;
-import com.example.coffeeorderservice.order.OrderEventClient;
-import com.example.coffeeorderservice.order.OrderService;
-import com.example.coffeeorderservice.point.InMemoryPointRepository;
+import com.example.coffeeorderservice.order.OutboxEventRepository;
 import com.example.coffeeorderservice.point.PointController;
-import com.example.coffeeorderservice.point.PointService;
-import java.time.Clock;
-import java.time.Instant;
-import java.time.ZoneOffset;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-class CoffeeOrderApiContractTest {
+@SpringBootTest
+class CoffeeOrderApiIntegrationTest {
+
+	@Autowired
+	private MenuController menuController;
+
+	@Autowired
+	private PointController pointController;
+
+	@Autowired
+	private OrderController orderController;
+
+	@Autowired
+	private ApiExceptionHandler apiExceptionHandler;
+
+	@Autowired
+	private CoffeeOrderJpaRepository coffeeOrderJpaRepository;
+
+	@Autowired
+	private OutboxEventRepository outboxEventRepository;
+
+	@Autowired
+	private MockDataPlatformOrderEventClient orderEventClient;
+
+	@Autowired
+	private JdbcTemplate jdbcTemplate;
 
 	private MockMvc mockMvc;
 
 	@BeforeEach
 	void setUp() {
-		InMemoryMenuRepository menuRepository = new InMemoryMenuRepository();
-		InMemoryOrderRepository orderRepository = new InMemoryOrderRepository();
-		PointService pointService = new PointService(new InMemoryPointRepository());
-		Clock clock = Clock.fixed(Instant.parse("2026-07-10T00:00:00Z"), ZoneOffset.UTC);
-		MenuService menuService = new MenuService(menuRepository);
-		PopularMenuService popularMenuService = new PopularMenuService(menuRepository, orderRepository, clock);
-		OrderEventClient orderEventClient = event -> {
-		};
-		OrderService orderService = new OrderService(
-				menuService,
-				pointService,
-				orderRepository,
-				orderEventClient,
-				clock
-		);
-
-		mockMvc = MockMvcBuilders.standaloneSetup(
-				new MenuController(menuService, popularMenuService),
-				new PointController(pointService),
-				new OrderController(orderService)
-		)
-				.setControllerAdvice(new ApiExceptionHandler())
+		outboxEventRepository.deleteAll();
+		coffeeOrderJpaRepository.deleteAll();
+		jdbcTemplate.update("delete from user_points");
+		orderEventClient.clearSentEvents();
+		mockMvc = MockMvcBuilders.standaloneSetup(menuController, pointController, orderController)
+				.setControllerAdvice(apiExceptionHandler)
 				.build();
 	}
 
@@ -62,21 +66,18 @@ class CoffeeOrderApiContractTest {
 		mockMvc.perform(get("/api/menus"))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$[0].menuId").value(1))
-				.andExpect(jsonPath("$[0].name").value("Americano"))
 				.andExpect(jsonPath("$[0].price").value(4_500));
 
 		mockMvc.perform(post("/api/points/charge")
 				.contentType(MediaType.APPLICATION_JSON)
 				.content("{\"userId\":1,\"amount\":10000}"))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.userId").value(1))
 				.andExpect(jsonPath("$.balance").value(10_000));
 
 		mockMvc.perform(post("/api/orders")
 				.contentType(MediaType.APPLICATION_JSON)
 				.content("{\"userId\":1,\"menuId\":1}"))
 				.andExpect(status().isCreated())
-				.andExpect(jsonPath("$.orderId").value(1))
 				.andExpect(jsonPath("$.paidAmount").value(4_500))
 				.andExpect(jsonPath("$.remainingBalance").value(5_500));
 

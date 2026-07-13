@@ -26,7 +26,7 @@ public class MenuService {
 	 * @return 메뉴 ID, 이름, 가격이 담긴 목록
 	 */
 	public List<MenuResponse> getMenus() {
-		return menuRepository.findAll().stream()
+		return menuRepository.findAllByOrderByIdAsc().stream()
 				.map(MenuResponse::from)
 				.toList();
 	}
