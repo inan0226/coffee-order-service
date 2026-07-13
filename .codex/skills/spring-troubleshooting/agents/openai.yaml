@@ -1,0 +1,4 @@
+interface:
+  display_name: "Spring Troubleshooting"
+  short_description: "Diagnose Spring Boot failures with evidence"
+  default_prompt: "Use $spring-troubleshooting to diagnose this coffee-order-service failure."

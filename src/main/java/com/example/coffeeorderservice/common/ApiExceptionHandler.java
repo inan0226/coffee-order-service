@@ -1,5 +1,7 @@
 package com.example.coffeeorderservice.common;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -14,6 +16,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
  */
 @RestControllerAdvice
 public class ApiExceptionHandler {
+
+	private static final Logger log = LoggerFactory.getLogger(ApiExceptionHandler.class);
 
 	/**
 	 * 업무 규칙 위반 예외를 오류 코드에 맞는 HTTP 응답으로 변환합니다.
@@ -38,5 +42,18 @@ public class ApiExceptionHandler {
 	public ResponseEntity<ErrorResponse> handleInvalidRequest(Exception exception) {
 		return ResponseEntity.badRequest()
 				.body(ErrorResponse.from(ErrorCode.INVALID_REQUEST));
+	}
+
+	/**
+	 * 예상하지 못한 예외는 서버 로그에만 상세 정보를 남기고, API에는 일반적인 오류만 응답합니다.
+	 *
+	 * @param exception 처리되지 않은 예외
+	 * @return 내부 구현 정보를 포함하지 않는 500 응답
+	 */
+	@ExceptionHandler(Exception.class)
+	public ResponseEntity<ErrorResponse> handleUnexpectedException(Exception exception) {
+		log.error("처리되지 않은 예외가 발생했습니다.", exception);
+		return ResponseEntity.internalServerError()
+				.body(ErrorResponse.from(ErrorCode.INTERNAL_SERVER_ERROR));
 	}
 }

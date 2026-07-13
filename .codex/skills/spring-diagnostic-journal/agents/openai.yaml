@@ -1,0 +1,4 @@
+interface:
+  display_name: "Spring Diagnostic Journal"
+  short_description: "Save reproducible troubleshooting evidence"
+  default_prompt: "Use $spring-diagnostic-journal to capture this troubleshooting run and its validation evidence."

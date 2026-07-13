@@ -1,0 +1,4 @@
+interface:
+  display_name: "Spring Flyway Migration Review"
+  short_description: "Review safe schema and index migrations"
+  default_prompt: "Use $spring-flyway-migration-reviewer to review this database migration."
