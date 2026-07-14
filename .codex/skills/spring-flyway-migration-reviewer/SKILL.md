@@ -1,21 +1,21 @@
 ---
 name: spring-flyway-migration-reviewer
-description: Review or plan safe Flyway schema and index changes for this coffee-order-service Spring Boot project. Use when adding a migration, changing a table or column, adding an index, diagnosing query performance, or checking PostgreSQL and H2 migration compatibility.
+description: 이 coffee-order-service Spring Boot 프로젝트의 안전한 Flyway 스키마·인덱스 변경을 검토하거나 계획한다. 마이그레이션 추가, 테이블 또는 컬럼 변경, 인덱스 추가, 쿼리 성능 진단, PostgreSQL과 H2의 마이그레이션 호환성 점검 시 사용한다.
 ---
 
-# Spring Flyway Migration Reviewer
+# Spring Flyway 마이그레이션 검토
 
-## Review Workflow
+## 검토 절차
 
-1. Read the affected repository query and entity mapping before designing a migration.
-2. Add a new forward-only `V<version>__<description>.sql` migration. Do not edit a migration that may already have been applied.
-3. Evaluate nullability, defaults, existing-row backfill, unique constraints, and index write cost. Flag destructive DDL or data loss for explicit approval.
-4. Match indexes to actual filter, join, grouping, and ordering columns; avoid speculative indexes.
-5. Validate startup and integration tests with the H2 test profile, then confirm PostgreSQL-specific syntax is intentional and documented.
-6. Update entity mappings, repository tests, and ERD/API documentation when the externally relevant schema changes.
+1. 마이그레이션을 설계하기 전에 영향을 받는 리포지토리 쿼리와 엔티티 매핑을 읽는다.
+2. 새로운 순방향 전용 `V<version>__<description>.sql` 마이그레이션을 추가한다. 이미 적용되었을 수 있는 마이그레이션은 수정하지 않는다.
+3. null 허용 여부, 기본값, 기존 행 백필, 유니크 제약 조건, 인덱스 쓰기 비용을 검토한다. 파괴적 DDL 또는 데이터 손실은 명시적 승인을 요청한다.
+4. 실제 필터·조인·그룹화·정렬 컬럼에 맞춰 인덱스를 설계하고, 추측성 인덱스는 추가하지 않는다.
+5. H2 테스트 프로필로 애플리케이션 시작과 통합 테스트를 검증한 뒤 PostgreSQL 전용 문법의 의도와 문서화를 확인한다.
+6. 외부에 영향을 주는 스키마 변경이면 엔티티 매핑, 리포지토리 테스트, ERD/API 문서를 함께 갱신한다.
 
-## Project Guardrails
+## 프로젝트 안전 규칙
 
-- Preserve the atomic `user_points` update semantics.
-- Keep outbox state and claim-attempt columns compatible with retry ownership checks.
-- Never put production credentials or captured production rows into a migration or test fixture.
+- `user_points`의 원자적 갱신 의미를 보존한다.
+- 아웃박스 상태와 선점 시도 횟수 컬럼은 재시도 소유권 확인과 호환되게 유지한다.
+- 운영 자격 증명이나 캡처한 운영 데이터를 마이그레이션 또는 테스트 픽스처에 넣지 않는다.

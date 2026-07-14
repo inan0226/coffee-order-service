@@ -1,4 +1,4 @@
 interface:
-  display_name: "Spring ADR Recorder"
-  short_description: "Record durable architecture decisions"
-  default_prompt: "Use $spring-adr-recorder to record this architecture decision."
+  display_name: "Spring ADR 기록"
+  short_description: "지속할 아키텍처 결정을 기록합니다"
+  default_prompt: "$spring-adr-recorder를 사용해 이 아키텍처 결정을 기록해 주세요."
