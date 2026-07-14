@@ -1,35 +1,35 @@
 ---
 name: spring-security-performance-reviewer
-description: Review or harden this coffee-order-service Spring Boot application for security, reliability, and database performance. Use when reviewing changes, planning refactors, investigating slow endpoints, reducing query count, checking data exposure, or validating transaction and outbox safety.
+description: 이 coffee-order-service Spring Boot 애플리케이션의 보안, 신뢰성, 데이터베이스 성능을 검토하거나 강화한다. 변경 리뷰, 리팩터링 계획, 느린 엔드포인트 조사, 쿼리 수 감소, 데이터 노출 점검, 트랜잭션·아웃박스 안전성 검증 시 사용한다.
 ---
 
-# Spring Security and Performance Reviewer
+# Spring 보안·성능 검토
 
-## Review Order
+## 검토 순서
 
-1. Check security and data integrity first.
-   - Validate request DTO constraints and avoid exposing entities or internal exception messages.
-   - Keep SQL parameterized and avoid logging credentials, request secrets, or stack details in API responses.
-   - Preserve transaction boundaries for point deduction, order creation, and outbox persistence.
-   - Flag authentication or authorization work that would change the assignment API contract before implementing it.
-2. Check database and runtime performance.
-   - Look for N+1 repository calls, unbounded reads, missing deterministic ordering, and repeated aggregation.
-   - Match high-frequency queries to existing indexes or propose a migration when an index is necessary.
-   - Do not hold database locks while making external calls; claim outbox rows in a short transaction.
-3. Add focused tests for each behavior change, then run the complete Gradle suite.
+1. 보안과 데이터 무결성을 먼저 점검한다.
+   - 요청 DTO 제약 조건을 검증하고 엔티티나 내부 예외 메시지를 노출하지 않는다.
+   - SQL은 매개변수화하고 자격 증명, 요청 비밀값, 스택 세부 정보를 API 응답에 기록하지 않는다.
+   - 포인트 차감, 주문 생성, 아웃박스 저장의 트랜잭션 경계를 보존한다.
+   - 과제 API 계약을 변경할 수 있는 인증·인가 작업은 구현 전에 알린다.
+2. 데이터베이스와 런타임 성능을 점검한다.
+   - N+1 리포지토리 호출, 건수 제한 없는 조회, 비결정적 정렬, 반복 집계를 찾는다.
+   - 고빈도 쿼리를 기존 인덱스와 대조하고 인덱스가 필요할 때만 마이그레이션을 제안한다.
+   - 외부 호출 중에는 데이터베이스 잠금을 잡지 않고 짧은 트랜잭션에서 아웃박스 행을 선점한다.
+3. 동작을 변경했다면 각각의 집중 테스트를 추가하고 전체 Gradle 테스트를 실행한다.
 
-## Project Guardrails
+## 프로젝트 안전 규칙
 
-- Return DTO records from controllers and keep business rules in services.
-- Use `PageRequest` for bounded result sets and preserve aggregate ordering in application code.
-- Keep the external order client behind `OrderEventClient`; do not make the in-memory mock a production dependency.
-- Preserve the outbox's at-least-once semantics and document any receiver-side idempotency requirement.
+- 컨트롤러는 DTO 레코드를 반환하고 비즈니스 규칙은 서비스에 둔다.
+- 결과 건수가 제한된 조회에는 `PageRequest`를 사용하고 애플리케이션 코드에서 집계 결과의 정렬을 보존한다.
+- 외부 주문 클라이언트는 `OrderEventClient` 뒤에 두고, 메모리 내 모의 구현을 운영 의존성으로 만들지 않는다.
+- 아웃박스의 최소 한 번 전송 의미를 보존하고 수신 측 멱등성 요구사항을 문서화한다.
 
-## Findings Format
+## 발견 사항 형식
 
 ```text
-[P1|P2|P3] File and line: issue
-Impact:
-Recommended change:
-Test:
+[P1|P2|P3] 파일과 줄: 문제
+영향:
+권장 변경:
+테스트:
 ```

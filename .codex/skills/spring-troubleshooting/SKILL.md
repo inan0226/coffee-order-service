@@ -1,36 +1,36 @@
 ---
 name: spring-troubleshooting
-description: Diagnose and explain failures in this coffee-order-service Spring Boot project. Use when startup, Flyway, PostgreSQL, API validation, transactions, point balances, outbox delivery, concurrency, or tests fail or behave unexpectedly. Gather reproducible evidence before proposing a fix.
+description: 이 coffee-order-service Spring Boot 프로젝트의 실패를 진단하고 설명한다. 애플리케이션 시작, Flyway, PostgreSQL, API 검증, 트랜잭션, 포인트 잔액, 아웃박스 전송, 동시성, 테스트가 실패하거나 예상과 다르게 동작할 때 사용한다. 수정안을 제시하기 전에 재현 가능한 증적을 수집한다.
 ---
 
-# Spring Troubleshooting
+# Spring 트러블슈팅
 
-## Workflow
+## 절차
 
-1. Reproduce the symptom with the smallest relevant Gradle test, API request, log, or database query.
-2. Classify the failure before editing:
-   - startup/configuration: profile, environment variables, Docker Compose, Flyway, JPA validation
-   - API: request DTO validation, controller mapping, `ApiExceptionHandler`, response contract
-   - data/transaction: transaction boundary, SQL row count, rollback, schema/index mismatch
-   - concurrency/outbox: conditional point update, claim status, lease timeout, retry ownership
-3. Inspect only the affected controller, service, repository, migration, and test.
-4. State the root cause with evidence, then make the smallest safe change if implementation was requested.
-5. Run the focused regression test and the full test suite after a fix.
+1. 가장 작은 관련 Gradle 테스트, API 요청, 로그, 데이터베이스 쿼리로 증상을 재현한다.
+2. 편집하기 전에 실패를 분류한다.
+   - 시작·설정: 프로필, 환경 변수, Docker Compose, Flyway, JPA 검증
+   - API: 요청 DTO 검증, 컨트롤러 매핑, `ApiExceptionHandler`, 응답 계약
+   - 데이터·트랜잭션: 트랜잭션 경계, SQL 영향 행 수, 롤백, 스키마·인덱스 불일치
+   - 동시성·아웃박스: 조건부 포인트 갱신, 선점 상태, 임대 시간 초과, 재시도 소유권
+3. 영향을 받은 컨트롤러, 서비스, 리포지토리, 마이그레이션, 테스트만 검사한다.
+4. 증적으로 근본 원인을 설명한 뒤, 구현이 요청된 경우에만 가장 작은 안전한 변경을 적용한다.
+5. 수정 뒤 집중 회귀 테스트와 전체 테스트 모음을 실행한다.
 
-## Project Checks
+## 프로젝트 점검 항목
 
-- Confirm PostgreSQL settings in `application.properties` and the H2 test profile in `src/test/resources`.
-- Treat `user_points` updates as atomic SQL operations; do not replace them with read-modify-write logic.
-- Keep point deduction, order persistence, and outbox persistence in the same transaction.
-- Treat the outbox as at-least-once delivery. Check claim attempt ownership before changing `PROCESSING` events.
-- Use the `Clock` bean for time-window and timeout tests.
+- `application.properties`의 PostgreSQL 설정과 `src/test/resources`의 H2 테스트 프로필을 확인한다.
+- `user_points` 갱신은 원자적 SQL로 취급하며 읽기-수정-쓰기 방식으로 바꾸지 않는다.
+- 포인트 차감, 주문 저장, 아웃박스 저장을 동일한 트랜잭션에 둔다.
+- 아웃박스는 최소 한 번 전송으로 취급한다. `PROCESSING` 이벤트를 바꾸기 전에는 선점 시도의 소유권을 확인한다.
+- 시간 범위와 시간 초과 테스트에는 `Clock` Bean을 사용한다.
 
-## Report Format
+## 보고 형식
 
 ```text
-Symptom:
-Root cause:
-Evidence:
-Fix or next diagnostic step:
-Validation:
+증상:
+근본 원인:
+증적:
+수정 또는 다음 진단 단계:
+검증:
 ```

@@ -1,4 +1,4 @@
 interface:
-  display_name: "Spring API Contract Regression"
-  short_description: "Keep API docs, DTOs, and tests aligned"
-  default_prompt: "Use $spring-api-contract-regression to review this API change for contract regressions."
+  display_name: "Spring API 계약 회귀 점검"
+  short_description: "API 문서, DTO, 테스트의 일치를 점검합니다"
+  default_prompt: "$spring-api-contract-regression를 사용해 이 API 변경의 계약 회귀를 점검해 주세요."

@@ -1,37 +1,37 @@
 ---
 name: spring-adr-recorder
-description: Record durable architecture decisions for this coffee-order-service Spring Boot project in concise Korean ADR documents. Use when selecting or changing a persistence strategy, transaction boundary, outbox delivery model, concurrency control, API compatibility policy, observability approach, or another decision with meaningful alternatives and long-term consequences.
+description: 이 coffee-order-service Spring Boot 프로젝트에서 지속할 아키텍처 결정을 간결한 한국어 ADR 문서로 기록한다. 영속성 전략, 트랜잭션 경계, 아웃박스 전송 모델, 동시성 제어, API 호환성 정책, 관측 방식처럼 대안과 장기 영향이 있는 결정을 선택하거나 변경할 때 사용한다.
 ---
 
-# Spring ADR Recorder
+# Spring ADR 기록
 
-## Workflow
+## 절차
 
-1. Create an ADR only for a durable decision with alternatives; do not create one for a mechanical refactor.
-2. Store it under `docs/adr/` as the next zero-padded sequence number and a kebab-case title, for example `0001-outbox-delivery.md`.
-3. Write the ADR in Korean using this structure:
+1. 대안이 있는 지속적 결정에만 ADR을 작성하고 기계적인 리팩터링에는 작성하지 않는다.
+2. `docs/adr/` 아래에 다음 0 채움 순번과 kebab-case 제목으로 저장한다. 예: `0001-outbox-delivery.md`
+3. ADR은 한국어로 다음 구조를 사용한다.
 
 ```markdown
-# ADR-0001: Decision title
+# ADR-0001: 결정 제목
 
-## Status
-Accepted
+## 상태
+채택됨
 
-## Context
+## 배경
 
-## Decision
+## 결정
 
-## Considered alternatives
+## 검토한 대안
 
-## Consequences and trade-offs
+## 결과와 트레이드오프
 ```
 
-4. State why the selected option fits the current service, what it does not solve, and which code, migration, API document, or test enforces it.
-5. Link the ADR from related documentation only when it materially improves discoverability.
+4. 선택지가 현재 서비스에 적합한 이유, 해결하지 못하는 문제, 이를 강제하는 코드·마이그레이션·API 문서·테스트를 명시한다.
+5. 관련 문서의 탐색성이 실질적으로 좋아질 때만 ADR을 연결한다.
 
-## Existing Project Decisions to Preserve
+## 보존할 기존 프로젝트 결정
 
-- Point balance updates rely on conditional SQL, not JVM-local locking.
-- Order persistence, point deduction, and outbox persistence share a transaction.
-- Outbox delivery is at-least-once; consumers require idempotency.
-- Popular-menu results are bounded and deterministically ordered.
+- 포인트 잔액은 JVM 로컬 락이 아닌 조건부 SQL로 갱신한다.
+- 주문 저장, 포인트 차감, 아웃박스 저장은 하나의 트랜잭션으로 처리한다.
+- 아웃박스는 최소 한 번 전송하며 소비자는 멱등하게 처리해야 한다.
+- 인기 메뉴 결과는 건수를 제한하고 결정적인 순서로 반환한다.
