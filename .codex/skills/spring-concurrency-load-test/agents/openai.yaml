@@ -1,4 +1,4 @@
 interface:
-  display_name: "Spring Concurrency Load Test"
-  short_description: "Exercise concurrent point and outbox flows"
-  default_prompt: "Use $spring-concurrency-load-test to validate this concurrent workflow."
+  display_name: "Spring 동시성 반복 테스트"
+  short_description: "동시 포인트·아웃박스 흐름을 검증합니다"
+  default_prompt: "$spring-concurrency-load-test를 사용해 이 동시성 흐름을 검증해 주세요."

@@ -1,4 +1,4 @@
 interface:
-  display_name: "Spring Diagnostic Journal"
-  short_description: "Save reproducible troubleshooting evidence"
-  default_prompt: "Use $spring-diagnostic-journal to capture this troubleshooting run and its validation evidence."
+  display_name: "Spring 진단 저널"
+  short_description: "재현 가능한 트러블슈팅 증적을 저장합니다"
+  default_prompt: "$spring-diagnostic-journal를 사용해 이 트러블슈팅 실행과 검증 증적을 기록해 주세요."

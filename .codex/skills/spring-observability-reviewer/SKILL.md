@@ -1,27 +1,27 @@
 ---
 name: spring-observability-reviewer
-description: Review and improve observability for this coffee-order-service Spring Boot application. Use when adding logs, diagnosing an API or outbox failure, reviewing error handling, deciding which metrics or correlation identifiers to capture, or checking that troubleshooting evidence is useful without exposing sensitive data.
+description: 이 coffee-order-service Spring Boot 애플리케이션의 관측 가능성을 검토하고 개선한다. 로그 추가, API 또는 아웃박스 실패 진단, 예외 처리 검토, 수집할 메트릭·상관관계 식별자 결정, 민감정보를 노출하지 않는 트러블슈팅 증적 확인 시 사용한다.
 ---
 
-# Spring Observability Reviewer
+# Spring 관측 가능성 검토
 
-## Review Workflow
+## 검토 절차
 
-1. Identify the operation boundary: HTTP request, point update, order transaction, outbox claim, or external event delivery.
-2. Check that failures can be correlated with stable, non-secret identifiers such as order ID, outbox event ID, claim attempt, and request ID when available.
-3. Keep API responses generic for unexpected errors; place technical stack details only in server logs.
-4. Never log passwords, tokens, authorization headers, JDBC credentials, or full customer payloads. Log IDs and result states instead.
-5. For retries, log the event ID, attempt count, state transition, and exception type. Do not claim success before the state update succeeds.
-6. Capture a redacted command result with `spring-diagnostic-journal` whenever a reproducible failure is found.
+1. HTTP 요청, 포인트 갱신, 주문 트랜잭션, 아웃박스 선점, 외부 이벤트 전송 중 작업 경계를 식별한다.
+2. 주문 ID, 아웃박스 이벤트 ID, 선점 시도 횟수, 요청 ID처럼 안정적이고 비밀이 아닌 식별자로 실패를 연관 지을 수 있는지 확인한다.
+3. 예상하지 못한 예외의 API 응답은 일반적인 내용으로 유지하고, 기술적인 스택 세부 정보는 서버 로그에만 둔다.
+4. 비밀번호, 토큰, 인가 헤더, JDBC 자격 증명, 전체 고객 요청 본문을 로그에 남기지 않는다. 대신 ID와 처리 결과 상태를 남긴다.
+5. 재시도 시 이벤트 ID, 시도 횟수, 상태 전이, 예외 유형을 기록한다. 상태 갱신에 성공하기 전에는 성공으로 기록하지 않는다.
+6. 재현 가능한 실패를 발견하면 `spring-diagnostic-journal`로 비식별화한 명령 결과를 기록한다.
 
-## Signals to Prefer
+## 우선 수집 신호
 
-- Order flow: user ID, menu ID, order ID, paid amount, remaining balance, transaction result.
-- Outbox flow: outbox event ID, claim attempt, status before/after, retry result.
-- Performance: endpoint or repository operation, query count regression, bounded result size, elapsed time only when it helps compare a baseline.
+- 주문 흐름: 사용자 ID, 메뉴 ID, 주문 ID, 결제 금액, 남은 잔액, 트랜잭션 결과
+- 아웃박스 흐름: 아웃박스 이벤트 ID, 선점 시도 횟수, 전후 상태, 재시도 결과
+- 성능: 엔드포인트 또는 리포지토리 작업, 쿼리 수 회귀, 제한된 결과 건수, 기준선 비교에 도움이 되는 경우에만 경과 시간
 
-## Guardrails
+## 안전 규칙
 
-- Do not add an observability platform, external telemetry SDK, or request-header contract without confirming the operational choice.
-- Do not replace structured domain errors with raw exception messages.
-- Keep logs concise enough to be actionable; prefer one state-transition log over duplicate logs at every layer.
+- 운영 방식을 확인하지 않고 관측 플랫폼, 외부 원격 계측 SDK, 요청 헤더 계약을 추가하지 않는다.
+- 구조화된 도메인 오류를 원시 예외 메시지로 대체하지 않는다.
+- 모든 계층에 중복 로그를 남기기보다 하나의 상태 전이 로그를 우선해 실행 가능한 수준으로 간결하게 유지한다.
