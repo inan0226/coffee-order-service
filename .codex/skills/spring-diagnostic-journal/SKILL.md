@@ -37,4 +37,4 @@ python .codex/skills/spring-diagnostic-journal/scripts/record_incident.py `
 - `.codex/troubleshooting/logs/`는 비식별화 후에도 장황한 명령 출력이 포함될 수 있으므로 로컬에만 두고 무시 목록에 넣는다.
 - 실패 시 재현 결과와 수정 뒤 검증 결과를 모두 기록한다.
 - 비결정적인 동시성 또는 아웃박스 문제에는 시점, 시도·선점 식별자, 정확한 반복 테스트 명령을 포함한다.
-- 원인 분석에는 `spring-troubleshooting`, 증적 기록에는 이 스킬, API 회귀 테스트 선정에는 `spring-api-test-checker`를 사용한다.
+- 원인 분석에는 `spring-troubleshooting`, 증적 기록에는 이 스킬, API 회귀 테스트 선정에는 `spring-assignment-reviewer`를 사용한다.

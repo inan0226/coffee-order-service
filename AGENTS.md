@@ -30,13 +30,13 @@
 3. 평가
    - 먼저 변경 범위에 맞는 집중 테스트를 실행한다.
    - 완료 선언 전 전체 테스트를 실행한다.
-   - `.codex/skills/spring-assignment-reviewer/SKILL.md`의 요구사항 체크리스트를 확인한다.
+   - `.codex/skills/spring-assignment-reviewer/SKILL.md`의 범위별 체크리스트를 확인한다.
    - 검증하지 못한 항목이 있으면 명확히 보고한다.
 
 ## 스킬 문서 사용 규칙
 
 - 기능 구현 전에는 `.codex/skills/coffee-assignment-implementer/SKILL.md`를 읽는다.
-- 테스트 설계 또는 테스트 누락 점검 전에는 `.codex/skills/spring-api-test-checker/SKILL.md`를 읽는다.
+- 테스트 설계·API 계약·마이그레이션·보안·성능·관측 가능성의 점검은 `.codex/skills/spring-assignment-reviewer/SKILL.md`에서 변경 범위에 맞는 항목만 사용한다.
 - 제출 전 최종 리뷰에는 `.codex/skills/spring-assignment-reviewer/SKILL.md`를 읽는다.
 
 ## 프로젝트 컨벤션

@@ -1,4 +1,0 @@
-interface:
-  display_name: "Spring Flyway 마이그레이션 검토"
-  short_description: "안전한 스키마·인덱스 마이그레이션을 검토합니다"
-  default_prompt: "$spring-flyway-migration-reviewer를 사용해 이 데이터베이스 마이그레이션을 검토해 주세요."

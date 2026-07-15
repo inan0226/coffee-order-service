@@ -1,4 +1,0 @@
-interface:
-  display_name: "Spring 보안·성능 검토"
-  short_description: "보안, 신뢰성, 쿼리 효율을 검토합니다"
-  default_prompt: "$spring-security-performance-reviewer를 사용해 이 변경의 보안과 성능을 검토해 주세요."
